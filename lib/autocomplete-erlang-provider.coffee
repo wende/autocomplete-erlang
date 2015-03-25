@@ -14,6 +14,13 @@ class RsenseProvider
       # rsense expects 1-based positions
       row = options.cursor.getBufferRow() + 1
       col = options.cursor.getBufferColumn() + 1
+
+      prefix = options.editor.getTextInBufferRange([[row-1 ,0],[row-1, col-1]])
+      matcher = /\S*(\w|:)$/.exec(prefix)
+      unless matcher then resolve([])
+      prefix = matcher[0]
+      options.prefix = prefix
+
       completions = @rsenseClient.checkCompletion(options.editor,
       options.buffer, row, col, options.prefix, (completions) =>
         suggestions = @findSuggestions(options.prefix, completions)
@@ -27,15 +34,17 @@ class RsenseProvider
       for completion in completions when completion.name isnt prefix
         kind = completion.kind.toLowerCase()
         word = completion.name
-        count = parseInt(/\d*$/.exec(word)) || 0
-        word = word.split("/")[0] + "("
-        i = 0
-        while ++i <= count then word += "${#{i}:#{i}}" + (if i != count then "," else ")") 
-
+        count = parseInt(/\d*$/.exec(word)) || 0;
+        if count
+          word = word.split("/")[0] + "("
+          i = 0
+          while ++i <= count then word += "${#{i}:#{i}}" + (if i != count then "," else ")")
+          word += "${#{count+1}:_}"
+        [..., last] = prefix.split(":")
         suggestion =
-          snippet: prefix.split(":")[0] + ":" + word.split("/")[0]
-          prefix: prefix
-          label: "#{kind} (#{completion.qualified_name})"
+          snippet: word
+          prefix: last
+          label: "#{completion.qualified_name}"
         suggestions.push(suggestion)
       return suggestions
     return []
