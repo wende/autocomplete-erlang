@@ -62,8 +62,7 @@
       ".js": [
         "lib/server/erlang/elixir.js",
         "lib/server/erlang/erlang.js",
-        "lib/server/helpers.js",
-
+        "lib/server/helpers.js"
       ],
       ".json": [
         "package.json"
