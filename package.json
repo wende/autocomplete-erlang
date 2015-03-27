@@ -84,7 +84,6 @@
           "lib/server/pty.js/lib",
           "lib/server/pty.js/test/children",
           "lib/server/pty.js/test",
-          "",
           "spec"
         ],
         "dependencies": {
