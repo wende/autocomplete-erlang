@@ -2,7 +2,7 @@ RsenseClient = require './autocomplete-erlang-client.coffee'
 
 module.exports =
 class RsenseProvider
-  id: 'autocomplete-erlang-erlangprovider'
+  id: 'autocomplete-erlang-provider'
   selector: '.source.erlang'
   rsenseClient: null
 
