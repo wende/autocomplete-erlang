@@ -1,7 +1,7 @@
 {
   "name": "autocomplete-erlang",
   "main": "./lib/autocomplete-erlang",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "author": {
     "name": "Krzysztof Wende",
     "email": "iraasta",
