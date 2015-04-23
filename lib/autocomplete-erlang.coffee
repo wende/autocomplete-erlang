@@ -1,5 +1,4 @@
 RsenseProvider = require './autocomplete-erlang-provider.coffee'
-require "./server/static"
 
 module.exports =
   config:
@@ -16,7 +15,7 @@ module.exports =
     @rsenseProvider = new RsenseProvider()
 
   provideAutocompletion: ->
-    {providers: [@rsenseProvider]}
+    [@rsenseProvider]
 
   deactivate: ->
     @rsenseProvider?.dispose()
