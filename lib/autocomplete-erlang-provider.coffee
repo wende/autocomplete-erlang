@@ -1,13 +1,17 @@
-RsenseClient = require './autocomplete-erlang-client.coffee'
+IS_ELIXIR = false
+
+lang = if IS_ELIXIR then "elixir" else "erlang"
+
+RsenseClient = require "./autocomplete-#{lang}-client.coffee"
+
 
 module.exports =
 class RsenseProvider
-  selector: '.source.erlang'
+  selector: ".source.#{lang}"
   rsenseClient: null
 
   constructor: ->
     @rsenseClient = new RsenseClient()
-
 
   getSuggestions: (request) ->
     return new Promise (resolve) =>
@@ -41,6 +45,9 @@ class RsenseProvider
         ret = null;
         if !word || !word[0] then continue
         if word[0] == word[0].toUpperCase() then [ret,isModule] = ["Module",true]
+        console.log(word)
+        console.log(word[0])
+        console.log("is mod #{isModule}")
         label = completion.spec
         if spec
           specs = spec.replace(/^[\w!?]+/,"")
@@ -51,28 +58,34 @@ class RsenseProvider
           argTypes = args.split(",")
         count = parseInt(/\d+$/.exec(word)) || 0;
         func = /\d+$/.test(word)
+        console.log("is function #{func}")
         if func then word = word.split("/")[0] + "("
+        inserted = word;
         i = 0
         while ++i <= count
           if argTypes then word += "${#{i}:#{argTypes[i-1]}}" + (if i != count then "," else "")
           else word +=  "${#{i}:#{i}}" + (if i != count then "," else "")
+          inserted += "${#{i}:#{i}}" + (if i != count then "," else "")
+
+
         if func
-          word += ")"
-          word += "${#{count+1}:\u0020}"
-        [..., last] = (prefix + postfix).split(".")
+          word += ")${#{count+1}:\u0020}"
+          inserted += ")${#{count+1}:\u0020}"
+        [..., last] = (prefix + postfix).split(if IS_ELIXIR then "." else ":")
 
+        type = "variable"
+        if isModule then type = "method"
+        if func     then type = "function"
 
-        if ret and ret.length > 20 then ret = ret.split("when")[0]
         suggestion =
           snippet:  if one then prefix + postfix + word else word
+          displayText:  if one then prefix + postfix + word else word
           prefix:  if one then prefix + postfix else last
           label: if ret then ret else "any"
-          type: if module then "method" else
-                if func then "function" else
-                "variable"
+          type: type
           description: spec || ret || "Desc"
+          #inclusionPriority: -1
           #TODO excludeLowerPriority: true
-        console.log  suggestion
         suggestions.push(suggestion)
       return suggestions
     return []

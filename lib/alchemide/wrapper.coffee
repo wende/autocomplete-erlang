@@ -21,7 +21,8 @@ exports.init = (pP) ->
   exit = (e) -> console.log("CLOSED #{e}"); exports.init(projectPaths)
 
   array.push(p)
-  setting = atom.config.get('autocomplete-elixir.elixirPath').replace(/elixir$/,"")
+  name = if IS_ELIXIR then 'autocomplete-elixir' else 'autocomplete-erlang'
+  setting = atom.config.get("#{name}.elixirPath").replace(/elixir$/,"")
   command = path.join ( setting || "") , "elixir"
   console.log(setting)
   try
@@ -38,7 +39,7 @@ exports.getAutocompletion = (prefix, cb) ->
   if prefix.trim().length < 1
     cb()
     return
-  cmd = if IS_ELIXIR then "a" else "ae"
+  cmd = if IS_ELIXIR then "a" else "ea"
   inp.write "#{cmd} #{prefix}\n"
   waitTillEnd (chunk) ->
     [_, one, multi] = chunk.split("<>")
