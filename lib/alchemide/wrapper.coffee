@@ -1,4 +1,7 @@
+IS_ELIXIR = false
+
 autocomplete = "autocompleter/autocomplete.exs"
+Process = require("atom").BufferedProcess
 
 spawn = require('child_process').spawn
 path = require 'path'
@@ -6,27 +9,43 @@ fs = require 'fs'
 
 out = null
 inp  = null
+projectPaths = null;
 
-exports.init = (projectPaths) ->
+error = (e) -> atom.notifications.addError("Woops. Something went bananas \n Error: #{e}") #console.log("Err: #{e}")
+
+exports.init = (pP) ->
+  projectPaths = pP;
   p = path.join(__dirname, autocomplete)
   array = projectPaths
+  stderr = (e) -> #console.log("Err: #{e}")
+  exit = (e) -> console.log("CLOSED #{e}"); exports.init(projectPaths)
+
   array.push(p)
-  ac  = spawn("elixir", array.reverse())
-  out = ac.stdout
-  inp  = ac.stdin
-  ac.stderr.on("data", (e) -> console.log("Err: #{e}") )
-  ac.on("close", (e) -> console.log("CLOSED #{e}"); exports.init(projectPaths))
-  ac.stdout.setMaxListeners(1)
+  setting = atom.config.get('autocomplete-elixir.elixirPath').replace(/elixir$/,"")
+  command = path.join ( setting || "") , "elixir"
+  console.log(setting)
+  try
+    ac = new Process({command: command, args: array.reverse(), stderr, exit})
+  catch e
+    error e
+
+
+  out = ac.process.stdout
+  inp = ac.process.stdin
+
 exports.getAutocompletion = (prefix, cb) ->
+  unless inp then exports.init(projectPaths)
   if prefix.trim().length < 1
     cb()
     return
-  inp.write "ea #{prefix}\n"
+  cmd = if IS_ELIXIR then "a" else "ae"
+  inp.write "#{cmd} #{prefix}\n"
   waitTillEnd (chunk) ->
     [_, one, multi] = chunk.split("<>")
     cb({one, multi: multi.split(";").filter((a) -> a.trim())})
 
 exports.loadFile =          (path,   cb = (->)) ->
+  unless inp then exports.init(projectPaths)
   unless /.ex$/.test(path)
     cb()
     return
