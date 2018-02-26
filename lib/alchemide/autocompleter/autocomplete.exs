@@ -26,6 +26,7 @@ replaceTypes = fn replaceType ->
     any, _ -> any
   end
 end
+
 replaceTypes = y2.(replaceTypes)
 
 zipFunSpec = fn
@@ -37,23 +38,38 @@ zipFunSpec = fn
     IO.inspect a
     a <> "@" <> first
 end
-mapper = fn {{name, arity}, types}, typesMap ->
 
-  spec = types
-  |> replaceTypes.(typesMap)
-  |> Enum.map(&spec_to_ast.(name, &1))
-  |> Enum.map(&Macro.to_string/1)
+mapper = fn a, typesMap ->
 
-  {Atom.to_string(name), spec}
+  case a do
+    {{name, arity}, types} ->
+      spec = types
+      |> replaceTypes.(typesMap)
+      |> Enum.map(&spec_to_ast.(name, &1))
+      |> Enum.map(&Macro.to_string/1)
+
+      {Atom.to_string(name), spec}
+
+    _ ->
+      {"", []}
+  end
 end
+
 reducer = fn {k, v}, acc ->
   Dict.put(acc,k,v)
 end
+
+parseSpec = fn a, b ->
+  case a do
+    { :type, { name, type, arg }} -> Map.put(b, name, type)
+
+    _ -> b
+  end
+end
+
 getSpec = fn module ->
   type_aliases = (Kernel.Typespec.beam_types(module) || [])
-  |> Enum.reduce %{}, fn
-    ({:type, {name, type, arg}},b) -> Map.put(b, name, type)
-  end
+  |> Enum.reduce(%{}, parseSpec)
 
   (Kernel.Typespec.beam_specs(module) || [])
   |> Enum.map(&mapper.(&1, type_aliases))
@@ -122,3 +138,4 @@ end
 System.argv
 |> Enum.map(loadAll)
 loop.(loop)
+
